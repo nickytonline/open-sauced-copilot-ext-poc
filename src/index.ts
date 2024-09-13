@@ -12,10 +12,7 @@ import {
 } from "@copilot-extensions/preview-sdk";
 import { getReferences } from "./utils/references";
 import { BEARER_TOKEN } from "./utils/tokens";
-import {
-  createStarSearchThread,
-  getStarSearchStream,
-} from "./utils/star-search";
+import { createStarSearchThread, getStarSearchStream } from "./utils/agent";
 
 const app = new Hono();
 
