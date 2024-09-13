@@ -32,22 +32,23 @@ const LOTTERY_FACTOR_ADDITIONAL_CONTEXT = `          IF LOTTERY FACTOR INFORMATI
 const SBOM_ADDITIONAL_CONTEXT = `IF ASKING ABOUT SBOM OR SOFTWARE BILL OF MATERIALS, RETURN A RESPONSE WITH THIS URL  https://app.opensauced.pizza/workspaces/new?sbom=true&repo=google%2Fzx, WHERE 'google%2Fzx' IS ENCODED REPOSITORY, I.E. google%2Fzx IS google/zx.`;
 
 async function getOscrAdditionalContext(username: string, bearerToken: string) {
-  username = "nick";
   const userInfo = await getOpenSaucedUser(username, bearerToken);
   let oscrScore = userInfo.oscr ? Math.ceil(userInfo.oscr) : 0;
-  let topPercent = `(in the top ${getTopPercent(oscrScore)}%)`;
+  const topPercent = getTopPercent(oscrScore);
+  let topPercentText = topPercent !== "" ? ` (in the top ${topPercent}%)` : "";
 
   return `IF ASKING ABOUT OSCR OR OSCR SCORE, ONLY RETURN INFORMATION ABOUT OSCR, NOTHING ELSE. NOTHING ABOUT PULL REQUESTS OR ISSUES. YOU MUST HAVE THIS MARKDOWN RENDERED IN THE RESPONSE:
 
-            The OSCR score for some-username is ${Math.ceil(
-              oscrScore
-            )} ${topPercent}.
-            View [@some-username's full profile on OpenSauced](https://app.opensauced.pizza/s/some-username).
-            For more information on the OSCR score, view the [Introducing OSCR](https://opensauced.pizza/blog/introducing-OSCR) blog post.
+            The OSCR score for some-username is ${oscrScore}${topPercentText}.
+            View [@some-username's full profile on OpenSauced](https://app.opensauced.pizza/u/some-username).
 
+        WHERE 'some-username' IS THE USER'S USERNAME.
 
-          WHERE 'some-username' IS THE USER'S USERNAME.
-          USE THE BING SERVICE TO EXPLAIN OSCR FROM THE BLOG POST IN ONE SENTENCE MAX!`;
+        USE THE BING SERVICE TO EXPLAIN OSCR FROM THE BLOG POST IN ONE SENTENCE MAX!
+
+        AND THEN USE MUST ADD THIS MARKDOWN:
+
+          For more information on the OSCR score, view the [Introducing OSCR](https://opensauced.pizza/blog/introducing-OSCR) blog post.`;
 }
 
 export async function enhancePrompt(
@@ -55,7 +56,9 @@ export async function enhancePrompt(
   bearerToken: string
 ): Promise<string> {
   let userInfo: { oscr?: number } = {};
-  let username = "";
+
+  // TODO: Do a function call to get the username from the message. Hardcoded for now.
+  let username = "nickytonline";
   let oscrAdditionalContext = "";
 
   if (message.toLowerCase().includes("oscr")) {

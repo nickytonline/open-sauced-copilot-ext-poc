@@ -38,11 +38,15 @@ export async function getStarSearchStream({
   bearerToken: string;
   message: string;
 }) {
+  const enhancedPrompt = await enhancePrompt(message, bearerToken);
+
   return fetch(
     new URL(`${DEFAULT_STAR_SEARCH_API_BASE_URL}/${starSeachThreadId}/stream`),
     {
       method: "POST",
-      body: JSON.stringify({ query_text: enhancePrompt(message, bearerToken) }),
+      body: JSON.stringify({
+        query_text: enhancedPrompt,
+      }),
       headers: {
         Accept: "*/*",
         "Content-Type": "application/json",
