@@ -11,8 +11,12 @@ import {
   getUserMessage,
 } from "@copilot-extensions/preview-sdk";
 import { getReferences } from "./utils/references";
-import { BEARER_TOKEN } from "./utils/tokens";
 import { createStarSearchThread, getStarSearchStream } from "./utils/agent";
+import {
+  handleAuthCallback,
+  signInWithGitHub,
+  supabase,
+} from "./utils/supabase";
 
 const BASE_URL = "https://1x76xljf-3000.use.devtunnels.ms/";
 
@@ -29,21 +33,79 @@ app.get("/", (c) => {
   );
 });
 
-app.get("/login", (c) => {
-  console.log("login route");
+app.get("/login", async (c) => {
+  const username = c.req.query("username");
+
+  if (!username) {
+    return c.text(
+      createErrorsEvent([
+        {
+          type: "agent",
+          message: "No GitHub token provided in the query parameters.",
+          code: "MISSING_GITHUB_TOKEN",
+          identifier: "missing_github_token",
+        },
+      ])
+    );
+  }
+
+  const { data, error } = await signInWithGitHub(username);
+
+  if (error) {
+    return c.text(
+      createErrorsEvent([
+        {
+          type: "agent",
+          message: "Failed to sign in to OpenSauced.",
+          code: "SIGN_IN_FAILED",
+          identifier: "sign_in_failed",
+        },
+      ])
+    );
+  }
+
+  return c.redirect(data.url);
+});
+
+app.get("/callback/oauth-callback", async (c) => {
+  const username = c.req.query("username") ?? "";
+  const code = c.req.query("code") ?? "";
+
+  if (!username || !code) {
+    return c.text(
+      createErrorsEvent([
+        {
+          type: "agent",
+          message: "Failed to sign in to OpenSauced.",
+          code: "SIGN_IN_FAILED",
+          identifier: "sign_in_failed",
+        },
+      ])
+    );
+  }
+
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  tokenStore.set(username, data.session?.access_token ?? "");
+
+  return c.text("You have successfully signed in to OpenSauced! 🎉");
 });
 
 app.post("/", async (c) => {
   // Identify the user, using the GitHub API token provided in the request headers.
   const tokenForUser = c.req.header("X-GitHub-Token") ?? "";
-  const starSearchToken = tokenStore.get(tokenForUser);
+  const octokit = new Octokit({ auth: tokenForUser });
+  const user = await octokit.request("GET /user");
+  const starSearchToken = tokenStore.get(user.data.login);
 
   if (!starSearchToken) {
     const authUrl = new URL("login", BASE_URL);
+    authUrl.searchParams.append("username", user.data.login);
 
     return c.text(
       createAckEvent() +
-        createTextEvent(`[Login to OpenSauced](${authUrl})`) +
+        createTextEvent(
+          `<a href="${authUrl}" target="_blank">Login to OpenSauced</a> to start using the GitHub Copilot extension.`
+        ) +
         createDoneEvent()
     );
   }
@@ -76,7 +138,9 @@ app.post("/", async (c) => {
     const currentMessage = getUserMessage(payload);
 
     // Create a new StarSearch thread.
-    const starSearchThreadResponse = await createStarSearchThread(BEARER_TOKEN);
+    const starSearchThreadResponse = await createStarSearchThread(
+      starSearchToken
+    );
 
     if (starSearchThreadResponse.status !== 201) {
       stream.write(
@@ -97,7 +161,7 @@ app.post("/", async (c) => {
 
     const response = await getStarSearchStream({
       starSeachThreadId,
-      bearerToken: BEARER_TOKEN,
+      bearerToken: starSearchToken,
       message: currentMessage,
     });
 
