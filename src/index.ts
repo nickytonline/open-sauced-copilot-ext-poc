@@ -14,7 +14,14 @@ import { getReferences } from "./utils/references";
 import { BEARER_TOKEN } from "./utils/tokens";
 import { createStarSearchThread, getStarSearchStream } from "./utils/agent";
 
+const BASE_URL = "https://1x76xljf-3000.use.devtunnels.ms/";
+
 const app = new Hono();
+
+// A rudimentary in-memory token store for the POC.
+const tokenStore = new Map<string, string>();
+
+// This is a rough POC of the GitHub Copilot extension for OpenSauced. 🍕
 
 app.get("/", (c) => {
   return c.text(
@@ -22,14 +29,18 @@ app.get("/", (c) => {
   );
 });
 
-// This is a rough POC of the GitHub Copilot extension for OpenSauced. 🍕
+app.get("/login", (c) => {
+  console.log("login route");
+});
 
 app.post("/", async (c) => {
   // Identify the user, using the GitHub API token provided in the request headers.
-  const tokenForUser = c.req.header("X-GitHub-Token");
+  const tokenForUser = c.req.header("X-GitHub-Token") ?? "";
+  const starSearchToken = tokenStore.get(tokenForUser);
 
-  if (true) {
-    const;
+  if (!starSearchToken) {
+    const authUrl = new URL("login", BASE_URL);
+
     return c.text(
       createAckEvent() +
         createTextEvent(`[Login to OpenSauced](${authUrl})`) +
