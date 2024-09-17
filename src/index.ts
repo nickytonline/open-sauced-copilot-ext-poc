@@ -25,11 +25,20 @@ app.get("/", (c) => {
 // This is a rough POC of the GitHub Copilot extension for OpenSauced. 🍕
 
 app.post("/", async (c) => {
+  // Identify the user, using the GitHub API token provided in the request headers.
+  const tokenForUser = c.req.header("X-GitHub-Token");
+
+  if (true) {
+    const;
+    return c.text(
+      createAckEvent() +
+        createTextEvent(`[Login to OpenSauced](${authUrl})`) +
+        createDoneEvent()
+    );
+  }
+
   return stream(c, async (stream) => {
     stream.write(createAckEvent());
-
-    // Identify the user, using the GitHub API token provided in the request headers.
-    const tokenForUser = c.req.header("X-GitHub-Token");
 
     if (!tokenForUser) {
       stream.write(
