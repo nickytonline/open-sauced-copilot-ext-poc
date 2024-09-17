@@ -7,6 +7,8 @@
     "@copilot-extensions/preview-sdk": "^4.0.3",
     "@hono/node-server": "^1.12.2",
     "@octokit/core": "^6.1.2",
+    "@supabase/supabase-js": "^2.45.4",
+    "dotenv": "^16.4.5",
     "hono": "^4.6.1"
   },
   "devDependencies": {
