@@ -22,8 +22,6 @@ const app = new Hono();
 // A rudimentary in-memory token store for the POC.
 const tokenStore = new Map<string, string>();
 
-// This is a rough POC of the GitHub Copilot extension for OpenSauced. 🍕
-
 app.get("/", (c) => {
   return c.text(
     "Welcome to the OpenSauced GitHub Copilot extension proof of concept! 🍕👩‍✈️"
@@ -101,7 +99,10 @@ app.post("/", async (c) => {
     return c.text(
       createAckEvent() +
         createTextEvent(
-          `<a href="${authUrl}" target="_blank">Login to OpenSauced</a> to start using the GitHub Copilot extension.`
+          `
+          <p>Welcome to the OpenSauced GitHub Copilot extension proof of concept. 🍕
+          <a href="${authUrl}" target="_blank">Login to OpenSauced</a> to start using the GitHub Copilot extension.
+          `
         ) +
         createDoneEvent()
     );
