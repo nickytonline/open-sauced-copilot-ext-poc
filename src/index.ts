@@ -123,11 +123,10 @@ app.post("/", async (c) => {
   const octokit = new Octokit({ auth: tokenForUser });
   const user = await octokit.request("GET /user");
   const starSearchToken = tokenStore.get(user.data.login);
+  const authUrl = new URL("login", BASE_URL);
+  authUrl.searchParams.append("username", user.data.login);
 
   if (!starSearchToken) {
-    const authUrl = new URL("login", BASE_URL);
-    authUrl.searchParams.append("username", user.data.login);
-
     return c.text(
       createAckEvent() +
         createTextEvent(
@@ -159,6 +158,13 @@ app.post("/", async (c) => {
             identifier: "star_search_thread_creation_failed",
           },
         ])
+      );
+      stream.write(
+        createAckEvent() +
+          createTextEvent(
+            `<p>Welcome to the OpenSauced GitHub Copilot extension proof of concept. 🍕</p><a href="${authUrl}" target="_blank">Login to OpenSauced</a> to start using the GitHub Copilot extension.`
+          ) +
+          createDoneEvent()
       );
       return;
     }
