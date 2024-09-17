@@ -1,14 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
-export const supabase = createClient(
-  "https://ibcwmlhcimymasokhgvn.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImliY3dtbGhjaW15bWFzb2toZ3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTkyOTU1MzMsImV4cCI6MjAxNDg3MTUzM30.Mr-ucuNDBjy9BC7NJzOBBi0Qz8WYiKI4n0JtWr4_woY",
-  {
-    auth: {
-      flowType: "pkce",
-    },
-  }
-);
+const { SUPABASE_URL, SUPABASE_ANON_KEY } = process.env;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
+}
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    flowType: "pkce",
+  },
+});
 
 const CALLBACK_URL =
   "https://1x76xljf-3000.use.devtunnels.ms/callback/oauth-callback";

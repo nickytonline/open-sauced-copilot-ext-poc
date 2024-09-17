@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { Octokit } from "@octokit/core";
@@ -12,13 +13,9 @@ import {
 } from "@copilot-extensions/preview-sdk";
 import { getReferences } from "./utils/references";
 import { createStarSearchThread, getStarSearchStream } from "./utils/agent";
-import {
-  handleAuthCallback,
-  signInWithGitHub,
-  supabase,
-} from "./utils/supabase";
+import { signInWithGitHub, supabase } from "./utils/supabase";
 
-const BASE_URL = "https://1x76xljf-3000.use.devtunnels.ms/";
+const { BASE_URL } = process.env;
 
 const app = new Hono();
 
