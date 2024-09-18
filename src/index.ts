@@ -10,6 +10,7 @@ import {
   createReferencesEvent,
   createTextEvent,
   getUserMessage,
+  verifyAndParseRequest,
 } from "@copilot-extensions/preview-sdk";
 import { getReferences } from "./utils/references";
 import { createStarSearchThread, getStarSearchStream } from "./utils/agent";
@@ -107,6 +108,27 @@ app.post("/", async (c) => {
   // Identify the user, using the GitHub API token provided in the request headers.
   const tokenForUser = c.req.header("X-GitHub-Token") ?? "";
 
+  const body = await c.req.text();
+  const signature = c.req.header("github-public-key-signature") ?? "";
+  const keyID = c.req.header("github-public-key-identifier") ?? "";
+
+  const { isValidRequest, payload } = await verifyAndParseRequest(
+    body,
+    signature,
+    keyID,
+    {
+      token: tokenForUser,
+    }
+  );
+
+  if (!isValidRequest) {
+    console.error("Request verification failed");
+    c.header("Content-Type", "text/plain");
+    c.status(401);
+    c.text("Request could not be verified");
+    return;
+  }
+
   if (!tokenForUser) {
     return c.text(
       createErrorsEvent([
@@ -139,8 +161,6 @@ app.post("/", async (c) => {
 
   return stream(c, async (stream) => {
     stream.write(createAckEvent());
-
-    const payload = await c.req.json();
     const currentMessage = getUserMessage(payload);
 
     // Create a new StarSearch thread.
